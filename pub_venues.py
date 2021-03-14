@@ -54,7 +54,8 @@ venues = []
 
 
 pg = ProxyGenerator()
-pg.Tor_Internal(tor_cmd = "/Applications/Tor Browser.app//Contents/Resources/TorBrowser/Tor/tor")
+#pg.Tor_Internal(tor_cmd = "/usr/local/bin/tor")
+pg.Tor_External(tor_sock_port=9050, tor_control_port=9051, tor_password="scholarly_password")
 scholarly.use_proxy(pg)
 
 
