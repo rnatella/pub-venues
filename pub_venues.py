@@ -53,9 +53,16 @@ else:
 venues = []
 
 
+scholarly.set_timeout(60)
+scholarly.set_logger(True)
+
+
+scraper_api_key = '<token>'
+
 pg = ProxyGenerator()
 #pg.Tor_Internal(tor_cmd = "/usr/local/bin/tor")
-pg.Tor_External(tor_sock_port=9050, tor_control_port=9051, tor_password="scholarly_password")
+#pg.Tor_External(tor_sock_port=9050, tor_control_port=9051, tor_password="scholarly_password")
+pg.SingleProxy(http = f"http://scraperapi:{scraper_api_key}@proxy-server.scraperapi.com:8001", https = f"http://scraperapi:{scraper_api_key}@proxy-server.scraperapi.com:8001")
 scholarly.use_proxy(pg)
 
 
@@ -63,8 +70,8 @@ for paper_title in papers_list:
 
     print("Searching for: {}".format(paper_title))
 
-    pub_query = scholarly.search_pubs(paper_title)
-    pub = scholarly.fill(next(pub_query))
+    pub_query = scholarly.search_single_pub(paper_title)
+    pub = next(pub_query)
 
     for citation in scholarly.citedby(pub):
         pub_title = citation['bib']['title']
@@ -95,9 +102,9 @@ for paper_title in papers_list:
 
             if scopus_result.title is not None:
 
-                diff = len(scopus_query) - len(scopus_result.title)
+                diff = abs(len(scopus_query) - len(scopus_result.title))
 
-                if scopus_paper_title_diff < diff:
+                if diff < scopus_paper_title_diff:
 
                     scopus_paper_title_diff = diff
                     scopus_paper = scopus_result
