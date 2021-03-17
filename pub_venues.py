@@ -10,6 +10,7 @@ import argparse
 import sys
 import os
 import pickle
+import time
 
 import urllib3
 urllib3.disable_warnings()
@@ -205,11 +206,13 @@ for paper_title in papers_list:
         print("------------------------")
         print("TITLE: {}".format(pub_title))
 
+        if not pub_title.isascii():
+            print("Paper title contains non-English characters, skipping...")
+            continue
+
         scopus_query = re.sub("[^a-zA-Z0-9-\s]+", "", pub_title)
 
-        if not scopus_query:
-            print("Paper title not processable, skipping...")
-            continue
+        time.sleep(1)
 
         s = ScopusSearch('TITLE ( "{}" ) '.format(scopus_query))
 
@@ -233,10 +236,10 @@ for paper_title in papers_list:
                     scopus_paper = scopus_result
 
         pub_venue = scopus_paper.publicationName
-        pub_year = scopus_paper.coverDate
+        pub_year = scopus_paper.coverDate[:4]
 
 
-        print("YEAR: {}".format(pub_year)).str[:4]
+        print("YEAR: {}".format(pub_year))
         print("VENUE: {}".format(pub_venue))
 
         venues.append(pub_venue)
