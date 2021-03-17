@@ -2,3 +2,5 @@
 references.json
 *.log
 *.pdf
+caching/*
+backup/*
