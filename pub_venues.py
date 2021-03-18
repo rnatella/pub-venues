@@ -1,5 +1,6 @@
 #!python3
 
+from pybliometrics import scopus
 from scholarly import scholarly
 from scholarly import ProxyGenerator
 from pybliometrics.scopus import ScopusSearch
@@ -95,6 +96,7 @@ for paper_title in papers_list:
     pub_serialized = os.path.join(caching_dir, paper_title + '.bin')
     citations_serialized = os.path.join(caching_dir, paper_title + '.citations.bin')
     iterator_serialized = os.path.join(caching_dir, paper_title + '.iterator.bin')
+    scopus_serialized = os.path.join(caching_dir, paper_title + '.scopus.bin')
 
     if os.path.exists(citations_serialized):
 
@@ -196,11 +198,24 @@ for paper_title in papers_list:
                         pickle.dump(cit_iterator.__getstate__(), iter_file)
 
 
+    scopus_cache = {}
+
+    if os.path.exists(scopus_serialized):
+
+        print("Loading Scopus query cache...")
+
+        with open(scopus_serialized, 'rb') as binfile:
+
+            while 1:
+                try:
+                    scopus_cache.update(pickle.load(binfile))
+                except EOFError:
+                    break
+
 
     for citation in citations:
 
         pub_title = citation['bib']['title']
-        #pub_year = citation['bib']['pub_year']
 
         print("")
         print("------------------------")
@@ -210,39 +225,62 @@ for paper_title in papers_list:
             print("Paper title contains non-English characters, skipping...")
             continue
 
-        scopus_query = re.sub("[^a-zA-Z0-9-\s]+", "", pub_title)
 
-        time.sleep(1)
-
-        s = ScopusSearch('TITLE ( "{}" ) '.format(scopus_query))
-
-        if s.results is None:
-            print("Paper not found on Scopus, skipping...")
+        if len(pub_title.split()) < 4:
+            print("Paper title contains too few words, skipping...")
             continue
 
+
+        scopus_query = re.sub("[^a-zA-Z0-9-\s]+", "", pub_title)
+
+
         scopus_paper = None
-        scopus_paper_title_diff = 1000
+        pub_venue = None
+        pub_year = None
 
-        # If multiple results, pick the most similar one
-        for scopus_result in s.results:
+        if scopus_query in scopus_cache:
 
-            if scopus_result.title is not None:
+            pub_venue = scopus_cache[scopus_query]['venue']
+            pub_year = scopus_cache[scopus_query]['year']
+        
+        else:
 
-                diff = abs(len(scopus_query) - len(scopus_result.title))
+            with open(scopus_serialized, 'wb') as binfile:   
 
-                if diff < scopus_paper_title_diff:
+                #time.sleep(1)
 
-                    scopus_paper_title_diff = diff
-                    scopus_paper = scopus_result
+                s = ScopusSearch('TITLE ( "{}" ) '.format(scopus_query))
 
-        pub_venue = scopus_paper.publicationName
-        pub_year = scopus_paper.coverDate[:4]
+                if s.results is None:
+                    print("Paper not found on Scopus, skipping...")
+                    pickle.dump({scopus_query: {'venue':None, 'year':None}}, binfile)
+                    continue
 
+                scopus_paper_title_diff = 1000
 
-        print("YEAR: {}".format(pub_year))
-        print("VENUE: {}".format(pub_venue))
+                # If multiple results, pick the most similar one
+                for scopus_result in s.results:
 
-        venues.append(pub_venue)
+                    if scopus_result.title is not None:
+
+                        diff = abs(len(scopus_query) - len(scopus_result.title))
+
+                        if diff < scopus_paper_title_diff:
+
+                            scopus_paper_title_diff = diff
+                            scopus_paper = scopus_result
+
+                pub_venue = scopus_paper.publicationName
+                pub_year = scopus_paper.coverDate[:4]
+
+                pickle.dump({scopus_query: {'venue':pub_venue, 'year':pub_year}}, binfile)
+
+        if pub_venue is not None and pub_year is not None:
+
+            print("YEAR: {}".format(pub_year))
+            print("VENUE: {}".format(pub_venue))
+
+            venues.append(pub_venue)
 
 
 venues_names = {}
