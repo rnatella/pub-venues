@@ -88,6 +88,8 @@ if not os.path.isdir(caching_dir):
 
 for paper_title in papers_list:
 
+    print("")
+    print("***************************************")
     print("Searching for: {}".format(paper_title))
 
     citations = []
@@ -245,7 +247,7 @@ for paper_title in papers_list:
         
         else:
 
-            with open(scopus_serialized, 'wb') as binfile:   
+            with open(scopus_serialized, 'ab') as binfile:   
 
                 #time.sleep(1)
 
