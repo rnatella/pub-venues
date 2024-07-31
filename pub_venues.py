@@ -68,7 +68,7 @@ scholarly.set_logger(True)
 
 
 if args.scaperapikey:
-    scraper_api_key = '4534bcf18967639e886fbe7dcf300f04'
+    scraper_api_key = args.scaperapikey
 
     pg = ProxyGenerator()
     pg.SingleProxy(http = f"http://scraperapi:{scraper_api_key}@proxy-server.scraperapi.com:8001", https = f"http://scraperapi:{scraper_api_key}@proxy-server.scraperapi.com:8001")
